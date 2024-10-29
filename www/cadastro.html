@@ -1,0 +1,49 @@
+<ons-page id="cadastro">
+    <ons-toolbar>
+        <div class="center">Cadastro de Tarefa</div>
+    </ons-toolbar>
+    <div class="content">
+        <ons-card class="cadastro-card">
+            <form id="formCadastro">
+                <!-- Campo Título -->
+                <div class="input-group">
+                    <ons-input id="titulo" modifier="underbar" float placeholder="Título" required>
+                    </ons-input>
+                </div>
+
+                <!-- Campo Descrição -->
+                <div class="input-group">
+                    <textarea id="descricao" modifier="underbar" float placeholder="Descrição" required
+                        rows="3"></textarea>
+                </div>
+
+                <!-- Campo Data -->
+                <div class="input-group">
+                    <ons-input id="data" type="date" modifier="underbar" float placeholder="Data" required>
+                    </ons-input>
+                </div>
+
+                <!-- Campo Prioridade -->
+                <div class="input-group">
+                    <ons-select id="prioridade" modifier="underbar" required>
+                        <option value="" disabled selected>Prioridade</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Média">Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </ons-select>
+                </div>
+
+                <!-- Botão Adicionar Foto -->
+                <div class="input-group">
+                    <ons-button modifier="quiet" id="btnTirarFoto">
+                        <ons-icon icon="md-camera" size="24px"></ons-icon> Adicionar Foto
+                    </ons-button>
+                    <img id="fotoPreview" src="" class="foto-preview">
+                </div>
+
+                <!-- Botão Salvar -->
+                <ons-button modifier="large" id="btnSalvar">Salvar</ons-button>
+            </form>
+        </ons-card>
+    </div>
+</ons-page>
