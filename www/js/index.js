@@ -1,30 +1,99 @@
 document.addEventListener("deviceready", onDeviceReady, false);
 
-let db = null;
+let database = null;
+let tarefas = new Map();
 
 function onDeviceReady() {
-  // Cordova is now initialized. Have fun!
-
+  // Cordova está inicializado.
   console.log("Running cordova-" + cordova.platformId + "@" + cordova.version);
-
-  document.getElementById("btnSalvar").onclick = salvarTarefa;
-  document.getElementById("btnTirarFoto").onclick = tirarFoto;
 }
 
-ons.ready(function () {
-  // Inicialize o Firebase com as credenciais do seu projeto
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-5aRbrNCIeKtCVfNK4rCj9rAuQ95UrKk",
-    authDomain: "appaluno-2cbf0.firebaseapp.com",
-    projectId: "appaluno-2cbf0",
-    storageBucket: "appaluno-2cbf0.appspot.com",
-    messagingSenderId: "674334619794",
-    appId: "1:674334619794:web:893ebd0933b50798590e4b",
-  };
+function carregarTarefas() {
+  database
+    .ref("tarefas/")
+    .get()
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        // lista.innerHTML = "";
+        snapshot.forEach((childSnapshot) => {
+          const tarefa = childSnapshot.val();
+          tarefa.key = childSnapshot.key;
+          tarefas.set(tarefa.key, tarefa);
+        });
+      }
+    });
+}
 
-  firebase.initializeApp(firebaseConfig);
+function renderTarefas() {
   carregarTarefas();
-});
+  var lista = document.querySelector("#listaTarefas");
+  lista.innerHTML = "";
+
+  tarefas.forEach((tarefa) => {
+    lista.appendChild(montaTabela(tarefa));
+  });
+}
+
+function montaTabela(tarefa) {
+  var key = tarefa.key;
+
+  const foto = tarefa.foto
+    ? tarefa.foto
+    : "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwJCB8v/9zErgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAvSURBVFjD7c0BDQAACAMgtX+KJzWGm4MCdJK6MHVELBaLxWKxWCwWi8VisVj8MV7qBgI2A8rYpgAAAABJRU5ErkJggg==";
+
+  var item = document.createElement("ons-list-item");
+  item.innerHTML = `
+        <div class="list-item__left">
+          <img class="list-item__thumbnail" src="data:image/png;base64,${foto}" alt="Cute kitten">
+        </div>
+
+        <div class="list-item__center">
+          <div class="list-item__title">${tarefa.titulo}</div>
+          <div class="list-item__subtitle">${tarefa.descricao}</div>
+        </div>
+        <div class="list-item__right">
+          <ons-icon icon="md-delete" class="delete-icon"></ons-icon>
+        </div>
+        `;
+
+  item.querySelector(".delete-icon").addEventListener("click", function () {
+    ons
+      .openActionSheet({
+        title: "Deseja realmente apagar?",
+        cancelable: true,
+        buttons: [
+          {
+            label: "Apagar",
+            modifier: "destructive",
+          },
+          {
+            label: "Cancelar",
+            icon: "md-close",
+          },
+        ],
+      })
+      .then(function (index) {
+        if (index === 0) {
+          deletarTarefa(key);
+        }
+      });
+  });
+  return item;
+}
+
+function deletarTarefa(key) {
+  database
+    .ref("tarefas/" + key)
+    .remove()
+    .then(function () {
+      carregarTarefas();
+      renderTarefas();
+      ons.notification.toast("Tarefa deletada.", { timeout: 2000 });
+    })
+    .catch(function (error) {
+      ons.notification.alert("Erro ao deletar tarefa.");
+    });
+}
 
 function tirarFoto() {
   navigator.camera.getPicture(onSuccess, onFail, {
@@ -36,9 +105,12 @@ function tirarFoto() {
   });
 
   function onSuccess(imageData) {
-    var image = document.getElementById("fotoPreview");
-    image.style.display = "block";
-    image.src = "data:image/jpeg;base64," + imageData;
+    var page = document.querySelector("#cadastro");
+    var image = page.querySelector("#fotoPreview");
+    if (image) {
+      image.style.display = "block";
+      image.src = "data:image/jpeg;base64," + imageData;
+    }
     localStorage.setItem("fotoTarefa", imageData);
   }
 
@@ -48,15 +120,15 @@ function tirarFoto() {
 }
 
 function salvarTarefa() {
-  var titulo = document.getElementById("titulo").value;
-  var descricao = document.getElementById("descricao").value;
-  var data = document.getElementById("data").value;
-  var prioridade = document.getElementById("prioridade").value;
+  var page = document.querySelector("#cadastro");
+  var titulo = page.querySelector("#titulo").value;
+  var descricao = page.querySelector("#descricao").value;
+  var data = page.querySelector("#data").value;
+  var prioridade = page.querySelector("#prioridade").value;
   var foto = localStorage.getItem("fotoTarefa") || "";
 
-  console.log("click");
-
   if (titulo && descricao && data && prioridade) {
+    const id = new Date().getTime();
     const novaTarefa = {
       titulo: titulo,
       descricao: descricao,
@@ -65,20 +137,21 @@ function salvarTarefa() {
       foto: foto,
     };
 
-    console.log(novaTarefa);
-
-    firebase
-      .database()
-      .ref("tarefas/")
-      .push(novaTarefa)
+    database
+      .ref(`tarefas/${id}`)
+      .set(novaTarefa)
       .then(function () {
         ons.notification.toast("Tarefa salva.", { timeout: 2000 });
-        document.getElementById("titulo").value = "";
-        document.getElementById("descricao").value = "";
-        document.getElementById("data").value = "";
-        document.getElementById("prioridade").value = "";
-        document.getElementById("fotoPreview").style.display = "none";
+        page.querySelector("#titulo").value = "";
+        page.querySelector("#descricao").value = "";
+        page.querySelector("#data").value = "";
+        page.querySelector("#prioridade").value = "";
+        var image = page.querySelector("#fotoPreview");
+        if (image) {
+          image.style.display = "none";
+        }
         localStorage.removeItem("fotoTarefa");
+        carregarTarefas();
       })
       .catch(function (error) {
         ons.notification.alert("Erro ao salvar tarefa.");
@@ -88,48 +161,49 @@ function salvarTarefa() {
   }
 }
 
+ons.ready(function () {
+  // Inicialize o Firebase com as credenciais do seu projeto
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-5aRbrNCIeKtCVfNK4rCj9rAuQ95UrKk",
+    authDomain: "appaluno-2cbf0.firebaseapp.com",
+    projectId: "appaluno-2cbf0",
+    storageBucket: "appaluno-2cbf0.firebasestorage.app",
+    messagingSenderId: "674334619794",
+    appId: "1:674334619794:web:893ebd0933b50798590e4b",
+    databaseURL: "https://appaluno-2cbf0-default-rtdb.firebaseio.com/",
+  };
+
+  const fb = firebase.initializeApp(firebaseConfig);
+  database = fb.database();
+  carregarTarefas();
+});
+
 document.addEventListener("init", function (event) {
-  if (event.target.id === "listagem") {
+  var page = event.target;
+
+  if (page.id === "listagem") {
     carregarTarefas();
+  }
+
+  if (page.id === "cadastro") {
+    const btnSalvar = page.querySelector("#btnSalvar");
+
+    if (btnSalvar) {
+      btnSalvar.addEventListener("click", salvarTarefa);
+    }
+
+    const btnTirarFoto = page.querySelector("#btnTirarFoto");
+
+    if (btnTirarFoto) {
+      btnTirarFoto.addEventListener("click", tirarFoto);
+    }
   }
 });
 
-function carregarTarefas() {
-  var lista = document.getElementById("listaTarefas");
-  lista.innerHTML = "";
+document.addEventListener("show", function (event) {
+  var page = event.target;
 
-  firebase
-    .database()
-    .ref("tarefas/")
-    .on("value", function (snapshot) {
-      snapshot.forEach(function (childSnapshot) {
-        var tarefa = childSnapshot.val();
-        var key = childSnapshot.key;
-
-        var item = document.createElement("ons-list-item");
-        item.innerHTML = `
-        <div class="center">
-          <span class="list-item__title">${tarefa.titulo}</span>
-          <span class="list-item__subtitle">${tarefa.descricao}</span>
-        </div>
-        <div class="right">
-          <ons-icon icon="md-delete" class="delete-icon" onclick="deletarTarefa('${key}')"></ons-icon>
-        </div>
-      `;
-        lista.appendChild(item);
-      });
-    });
-}
-
-function deletarTarefa(key) {
-  firebase
-    .database()
-    .ref("tarefas/" + key)
-    .remove()
-    .then(function () {
-      ons.notification.toast("Tarefa deletada.", { timeout: 2000 });
-    })
-    .catch(function (error) {
-      ons.notification.alert("Erro ao deletar tarefa.");
-    });
-}
+  if (page.id === "listagem") {
+    renderTarefas();
+  }
+});

@@ -29,8 +29,9 @@
             * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
                 * Enable inline JS: add 'unsafe-inline' to default-src
         -->
+
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+        content="default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
@@ -51,8 +52,7 @@
         <ons-tab label="Listagem" icon="md-view-list" page="listagem.html"></ons-tab>
         <ons-tab label="Créditos" icon="md-info" page="creditos.html"></ons-tab>
     </ons-tabbar>
-    <script src="cordova.js"></script>
-    <script src="js/index.js"></script>
+
 
     <!-- <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script> -->
     <!-- <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script> -->
@@ -60,7 +60,8 @@
     <script src="js/firebase/firebase-firestore-compat.js"></script>
     <script src="js/firebase/firebase-database-compat.js"></script>
     <script src="js/firebase/firebase-database.js"></script>
-
+    <script src="cordova.js"></script>
+    <script src="js/index.js"></script>
 
 </body>
 
